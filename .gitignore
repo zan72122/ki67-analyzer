@@ -1,0 +1,6 @@
+.DS_Store
+.specstory/
+.claude/
+.cursorindexingignore
+*.log
+node_modules/ 

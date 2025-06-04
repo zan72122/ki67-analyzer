@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ki-67 Analyzer - Pathologist-Grade Zero-Install</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+}
+
+#app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background: #2c3e50;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.controls button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background: #34495e;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.controls button:hover:not(:disabled) {
+    background: #4a5f7f;
+}
+
+.controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+main {
+    flex: 1;
+    padding: 2rem;
+}
+
+.dropzone {
+    max-width: 600px;
+    margin: 4rem auto;
+    padding: 4rem;
+    border: 3px dashed #bdc3c7;
+    border-radius: 8px;
+    text-align: center;
+    background: white;
+    transition: all 0.3s;
+}
+
+.dropzone.dragover {
+    border-color: #3498db;
+    background: #ecf0f1;
+    transform: scale(1.02);
+}
+
+.dropzone p {
+    font-size: 1.2rem;
+    color: #7f8c8d;
+    margin-bottom: 1rem;
+}
+
+#browseBtn {
+    padding: 0.75rem 2rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#browseBtn:hover {
+    background: #2980b9;
+}
+
+.workspace {
+    display: flex;
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.workspace.hidden {
+    display: none;
+}
+
+.canvas-container {
+    flex: 1;
+    position: relative;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: auto;
+    max-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.canvas-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+canvas {
+    cursor: pointer;
+    display: block;
+}
+
+#imageCanvas {
+    z-index: 1;
+}
+
+#overlayCanvas {
+    z-index: 2;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.sidebar {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.stats, .parameters {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.stats h3, .parameters h3 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.parameters {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.parameters h4 {
+    margin: 1.5rem 0 0.5rem;
+    color: #34495e;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #ecf0f1;
+    padding-bottom: 0.25rem;
+}
+
+.parameters h4:first-of-type {
+    margin-top: 0;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+    font-weight: bold;
+}
+
+.parameters label {
+    display: block;
+    margin-bottom: 1rem;
+    color: #555;
+}
+
+.parameters input[type="range"] {
+    width: 100%;
+    margin: 0.5rem 0;
+}
+
+.download-btn {
+    width: 100%;
+    padding: 1rem;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.download-btn:hover {
+    background: #229954;
+}
+
+.demo-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.demo-section h3 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.demo-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: #9b59b6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.demo-btn:hover {
+    background: #8e44ad;
+}
+
+.nucleus-marker {
+    position: absolute;
+    border: 2px solid;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.nucleus-positive {
+    border-color: #e74c3c;
+    background: rgba(231, 76, 60, 0.2);
+}
+
+.nucleus-negative {
+    border-color: #2ecc71;
+    background: rgba(46, 204, 113, 0.2);
+}
+
+.param-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.param-btn {
+    flex: 1;
+    padding: 0.5rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.param-btn:hover {
+    background: #2980b9;
+}
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Ki-67 Nucleus Analyzer</h1>
+            <div class="controls">
+                <button id="undo" disabled>↶ Undo</button>
+                <button id="redo" disabled>↷ Redo</button>
+                <button id="reset">Reset</button>
+            </div>
+        </header>
+        
+        <main>
+            <div id="dropzone" class="dropzone">
+                <p>Drag & drop your Ki-67 image here</p>
+                <input type="file" id="fileInput" accept="image/*" hidden>
+                <button id="browseBtn">Browse Files</button>
+            </div>
+            
+            <div id="workspace" class="workspace hidden">
+                <div class="canvas-container">
+                    <div class="canvas-wrapper">
+                        <canvas id="imageCanvas"></canvas>
+                        <canvas id="overlayCanvas"></canvas>
+                    </div>
+                </div>
+                
+                <div class="sidebar">
+                    <div class="stats">
+                        <h3>Analysis Results</h3>
+                        <div class="stat-row">
+                            <span>Positive (Ki-67+):</span>
+                            <span id="positiveCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Negative (Ki-67-):</span>
+                            <span id="negativeCount">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Ki-67 Index:</span>
+                            <span id="ki67Index">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="parameters">
+                        <h3>Detection Parameters</h3>
+                        
+                        <h4>Basic Parameters</h4>
+                        <label>
+                            Min Nucleus Size:
+                            <input type="range" id="minSize" min="50" max="500" value="150">
+                            <span id="minSizeValue">150</span>
+                        </label>
+                        <label>
+                            Max Nucleus Size:
+                            <input type="range" id="maxSize" min="500" max="5000" value="2000">
+                            <span id="maxSizeValue">2000</span>
+                        </label>
+                        <label>
+                            Intensity Threshold:
+                            <input type="range" id="threshold" min="0" max="255" value="128">
+                            <span id="thresholdValue">128</span>
+                        </label>
+                        
+                        <h4>CLAHE Parameters</h4>
+                        <label>
+                            Clip Limit:
+                            <input type="range" id="claheClipLimit" min="1" max="10" step="0.5" value="2">
+                            <span id="claheClipLimitValue">2</span>
+                        </label>
+                        <label>
+                            Tile Grid Size:
+                            <input type="range" id="claheTileSize" min="4" max="16" value="8">
+                            <span id="claheTileSizeValue">8</span>
+                        </label>
+                        
+                        <h4>Watershed Parameters</h4>
+                        <label>
+                            Distance Transform:
+                            <input type="range" id="distanceTransform" min="0" max="100" value="50">
+                            <span id="distanceTransformValue">50</span>
+                        </label>
+                        <label>
+                            Watershed Threshold:
+                            <input type="range" id="watershedThreshold" min="0" max="1" step="0.05" value="0.3">
+                            <span id="watershedThresholdValue">0.3</span>
+                        </label>
+                        
+                        <h4>Morphology Parameters</h4>
+                        <label>
+                            Erosion Size:
+                            <input type="range" id="erosionSize" min="0" max="10" value="3">
+                            <span id="erosionSizeValue">3</span>
+                        </label>
+                        <label>
+                            Dilation Size:
+                            <input type="range" id="dilationSize" min="0" max="10" value="3">
+                            <span id="dilationSizeValue">3</span>
+                        </label>
+                        
+                        <h4>Adaptive Threshold</h4>
+                        <label>
+                            Block Size:
+                            <input type="range" id="adaptiveBlockSize" min="3" max="31" step="2" value="11">
+                            <span id="adaptiveBlockSizeValue">11</span>
+                        </label>
+                        <label>
+                            C Constant:
+                            <input type="range" id="adaptiveC" min="-10" max="10" value="2">
+                            <span id="adaptiveCValue">2</span>
+                        </label>
+                        
+                        <h4>Classification</h4>
+                        <label>
+                            Positive Threshold Factor:
+                            <input type="range" id="positiveFactor" min="0.5" max="1" step="0.05" value="0.8">
+                            <span id="positiveFactorValue">0.8</span>
+                        </label>
+                        <label>
+                            Merge Distance:
+                            <input type="range" id="mergeDistance" min="5" max="30" value="15">
+                            <span id="mergeDistanceValue">15</span>
+                        </label>
+                        <label>
+                            IoU Threshold:
+                            <input type="range" id="iouThreshold" min="0.1" max="0.8" step="0.05" value="0.3">
+                            <span id="iouThresholdValue">0.3</span>
+                        </label>
+                        
+                        <div class="param-controls">
+                            <button id="saveParams" class="param-btn">Save Parameters</button>
+                            <button id="loadParams" class="param-btn">Load Parameters</button>
+                            <input type="file" id="paramFile" accept=".json" hidden>
+                        </div>
+                    </div>
+                    
+                    <button id="downloadCSV" class="download-btn">Download CSV</button>
+                
+                    <div class="demo-section">
+                        <h3>Demo Images</h3>
+                        <button id="loadDemo" class="demo-btn">Load Sample Ki-67</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="./opencv.js" async onerror="console.error('Failed to load opencv.js. Please ensure the file is in the same directory as this HTML file.')"></script>
+    <script>
+// OpenCV.jsの絶対URLを取得
+const opencvJsUrl = new URL('opencv.js', window.location.href).toString();
+
+const workerCode = `
+let cv;
+self.importScripts('__OPENCV_JS_URL__');
+
+self.onmessage = async function(e) {
+    const { type, data } = e.data;
+    
+    try {
+        if (type === 'init') {
+            await waitForCV();
+            self.postMessage({ type: 'ready' });
+        } else if (type === 'process') {
+            const { token } = data;
+            const result = await processImageChunk(data);
+            self.postMessage({ type: 'result', data: result, token });
+        }
+    } catch (error) {
+        self.postMessage({ type: 'error', error: error.message });
+    }
+};
+
+async function waitForCV() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 100; // 10秒でタイムアウト
+        
+        function checkCV() {
+            if (typeof cv !== 'undefined' && cv.Mat) {
+                resolve();
+            } else if (typeof self.cv !== 'undefined' && self.cv.Mat) {
+                cv = self.cv;
+                resolve();
+            } else {
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    reject(new Error('OpenCV.js failed to load in worker'));
+                } else {
+                    setTimeout(checkCV, 100);
+                }
+            }
+        }
+        checkCV();
+    });
+}
+
+async function processImageChunk(data) {
+    const { imageData, threshold, minSize, maxSize, chunkInfo, params } = data;
+    
+    const mat = cv.matFromImageData(imageData);
+    const gray = new cv.Mat();
+    
+    cv.cvtColor(mat, gray, cv.COLOR_RGBA2GRAY);
+    
+    // CLAHE for contrast enhancement
+    const clipLimit = params.claheClipLimit || 2.0;
+    const tileSize = params.claheTileSize || 8;
+    const clahe = new cv.CLAHE(clipLimit, new cv.Size(tileSize, tileSize));
+    const enhanced = new cv.Mat();
+    clahe.apply(gray, enhanced);
+    
+    const allNuclei = [];
+    
+    // Method 1: Otsu thresholding
+    const binary1 = new cv.Mat();
+    cv.threshold(enhanced, binary1, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
+    const nuclei1 = findContoursInBinary(binary1, enhanced, minSize, maxSize, threshold, chunkInfo, params);
+    allNuclei.push(...nuclei1);
+    binary1.delete();
+    
+    // Method 2: Fixed threshold
+    const binary2 = new cv.Mat();
+    cv.threshold(enhanced, binary2, threshold, 255, cv.THRESH_BINARY_INV);
+    const nuclei2 = findContoursInBinary(binary2, enhanced, minSize, maxSize, threshold, chunkInfo, params);
+    allNuclei.push(...nuclei2);
+    binary2.delete();
+    
+    // Method 3: Adaptive threshold for weak cells
+    const binary3 = new cv.Mat();
+    const blockSize = params.adaptiveBlockSize || 11;
+    const C = params.adaptiveC || 2;
+    cv.adaptiveThreshold(enhanced, binary3, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, blockSize, C);
+    const nuclei3 = findContoursInBinary(binary3, enhanced, minSize, maxSize, threshold, chunkInfo, params);
+    allNuclei.push(...nuclei3);
+    binary3.delete();
+    
+    // Method 4: High threshold for very bright positive cells
+    const binary4 = new cv.Mat();
+    cv.threshold(enhanced, binary4, threshold * 1.5, 255, cv.THRESH_BINARY_INV);
+    const nuclei4 = findContoursInBinary(binary4, enhanced, minSize, maxSize, threshold, chunkInfo, params);
+    allNuclei.push(...nuclei4);
+    binary4.delete();
+    
+    // Merge and deduplicate results
+    const mergedNuclei = mergeNuclei(allNuclei, params.mergeDistance || 15, params.iouThreshold || 0.3);
+    
+    mat.delete();
+    gray.delete();
+    enhanced.delete();
+    clahe.delete();
+    
+    return mergedNuclei;
+}
+
+function findContoursInBinary(binary, grayImage, minSize, maxSize, threshold, chunkInfo, params) {
+    const contours = new cv.MatVector();
+    const hierarchy = new cv.Mat();
+    cv.findContours(binary, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+    
+    const nuclei = [];
+    
+    for (let i = 0; i < contours.size(); i++) {
+        const contour = contours.get(i);
+        const area = cv.contourArea(contour);
+        
+        if (area >= minSize && area <= maxSize) {
+            const moments = cv.moments(contour);
+            if (moments.m00 === 0) {
+                contour.delete();
+                continue;
+            }
+            
+            const cx = moments.m10 / moments.m00;
+            const cy = moments.m01 / moments.m00;
+            const rect = cv.boundingRect(contour);
+            
+            // Ensure ROI is within bounds
+            if (rect.x + rect.width <= grayImage.cols && rect.y + rect.height <= grayImage.rows) {
+                const roiGray = grayImage.roi(rect);
+                const meanIntensity = cv.mean(roiGray)[0];
+                
+                // Improved classification logic
+                const positiveFactor = params.positiveFactor || 0.8;
+                const isPositive = meanIntensity < threshold * positiveFactor;
+                
+                nuclei.push({
+                    id: Date.now() + Math.random(),
+                    x: cx + chunkInfo.offsetX,
+                    y: cy + chunkInfo.offsetY,
+                    width: rect.width,
+                    height: rect.height,
+                    area: area,
+                    intensity: meanIntensity,
+                    isPositive: isPositive
+                });
+                
+                roiGray.delete();
+            }
+        }
+        contour.delete();
+    }
+    
+    contours.delete();
+    hierarchy.delete();
+    
+    return nuclei;
+}
+
+function mergeNuclei(allNuclei, mergeDistance, iouThreshold) {
+    if (allNuclei.length === 0) return [];
+
+    const merged = [];
+    const used = new Set();
+
+    const iou = (a, b) => {
+        const x1 = Math.max(a.x - a.width / 2, b.x - b.width / 2);
+        const y1 = Math.max(a.y - a.height / 2, b.y - b.height / 2);
+        const x2 = Math.min(a.x + a.width / 2, b.x + b.width / 2);
+        const y2 = Math.min(a.y + a.height / 2, b.y + b.height / 2);
+        const inter = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+        if (inter === 0) return 0;
+        const areaA = a.width * a.height;
+        const areaB = b.width * b.height;
+        return inter / (areaA + areaB - inter);
+    };
+
+    const contains = (inner, outer) => (
+        inner.x - inner.width / 2 >= outer.x - outer.width / 2 &&
+        inner.x + inner.width / 2 <= outer.x + outer.width / 2 &&
+        inner.y - inner.height / 2 >= outer.y - outer.height / 2 &&
+        inner.y + inner.height / 2 <= outer.y + outer.height / 2
+    );
+
+    for (let i = 0; i < allNuclei.length; i++) {
+        if (used.has(i)) continue;
+
+        const nucleus = allNuclei[i];
+        const duplicates = [i];
+
+        for (let j = i + 1; j < allNuclei.length; j++) {
+            if (used.has(j)) continue;
+            const other = allNuclei[j];
+
+            const distance = Math.hypot(nucleus.x - other.x, nucleus.y - other.y);
+            const overlap = iou(nucleus, other);
+            const contained = contains(nucleus, other) || contains(other, nucleus);
+
+            if (distance < mergeDistance || overlap > iouThreshold || contained) {
+                duplicates.push(j);
+            }
+        }
+
+        let best = nucleus;
+        for (const idx of duplicates) {
+            used.add(idx);
+            if (allNuclei[idx].area > best.area) best = allNuclei[idx];
+        }
+        merged.push(best);
+    }
+
+    return merged;
+}
+`;
+
+class Ki67Analyzer {
+    constructor() {
+        this.image = null;
+        this.nuclei = [];
+        this.history = [];
+        this.historyIndex = -1;
+        this.idleTimer = null;
+        this.cvReady = false;
+        this.workers = [];
+        this.workerCount = navigator.hardwareConcurrency || 4;
+        this.processingToken = 0;
+        this.isProcessing = false;
+        this.pendingReprocess = false;
+        this.reprocessTimer = null;
+        
+        this.initializeElements();
+        this.bindEvents();
+        this.loadSettings();
+        this.waitForOpenCV();
+        this.initializeWorkers();
+
+        // ウィンドウリサイズ時に表示サイズを更新
+        window.addEventListener('resize', () => {
+            if (this.image) {
+                this.resizeCanvasDisplay();
+            }
+        });
+    }
+    
+    initializeElements() {
+        this.dropzone = document.getElementById('dropzone');
+        this.fileInput = document.getElementById('fileInput');
+        this.browseBtn = document.getElementById('browseBtn');
+        this.workspace = document.getElementById('workspace');
+        this.imageCanvas = document.getElementById('imageCanvas');
+        this.overlayCanvas = document.getElementById('overlayCanvas');
+        this.imageCtx = this.imageCanvas.getContext('2d');
+        this.overlayCtx = this.overlayCanvas.getContext('2d');
+        
+        this.undoBtn = document.getElementById('undo');
+        this.redoBtn = document.getElementById('redo');
+        this.resetBtn = document.getElementById('reset');
+        this.downloadBtn = document.getElementById('downloadCSV');
+        this.loadDemoBtn = document.getElementById('loadDemo');
+        
+        this.positiveCount = document.getElementById('positiveCount');
+        this.negativeCount = document.getElementById('negativeCount');
+        this.ki67Index = document.getElementById('ki67Index');
+        
+        this.minSizeSlider = document.getElementById('minSize');
+        this.maxSizeSlider = document.getElementById('maxSize');
+        this.thresholdSlider = document.getElementById('threshold');
+        this.minSizeValue = document.getElementById('minSizeValue');
+        this.maxSizeValue = document.getElementById('maxSizeValue');
+        this.thresholdValue = document.getElementById('thresholdValue');
+        
+        // New parameter elements
+        this.claheClipLimitSlider = document.getElementById('claheClipLimit');
+        this.claheTileSizeSlider = document.getElementById('claheTileSize');
+        this.claheClipLimitValue = document.getElementById('claheClipLimitValue');
+        this.claheTileSizeValue = document.getElementById('claheTileSizeValue');
+        
+        this.distanceTransformSlider = document.getElementById('distanceTransform');
+        this.watershedThresholdSlider = document.getElementById('watershedThreshold');
+        this.distanceTransformValue = document.getElementById('distanceTransformValue');
+        this.watershedThresholdValue = document.getElementById('watershedThresholdValue');
+        
+        this.erosionSizeSlider = document.getElementById('erosionSize');
+        this.dilationSizeSlider = document.getElementById('dilationSize');
+        this.erosionSizeValue = document.getElementById('erosionSizeValue');
+        this.dilationSizeValue = document.getElementById('dilationSizeValue');
+        
+        this.adaptiveBlockSizeSlider = document.getElementById('adaptiveBlockSize');
+        this.adaptiveCSlider = document.getElementById('adaptiveC');
+        this.adaptiveBlockSizeValue = document.getElementById('adaptiveBlockSizeValue');
+        this.adaptiveCValue = document.getElementById('adaptiveCValue');
+        
+        this.positiveFactorSlider = document.getElementById('positiveFactor');
+        this.mergeDistanceSlider = document.getElementById('mergeDistance');
+        this.positiveFactorValue = document.getElementById('positiveFactorValue');
+        this.mergeDistanceValue = document.getElementById('mergeDistanceValue');
+        
+        this.iouThresholdSlider = document.getElementById('iouThreshold');
+        this.iouThresholdValue = document.getElementById('iouThresholdValue');
+        
+        this.saveParamsBtn = document.getElementById('saveParams');
+        this.loadParamsBtn = document.getElementById('loadParams');
+        this.paramFileInput = document.getElementById('paramFile');
+    }
+    
+    bindEvents() {
+        this.dropzone.addEventListener('dragover', this.handleDragOver.bind(this));
+        this.dropzone.addEventListener('dragleave', this.handleDragLeave.bind(this));
+        this.dropzone.addEventListener('drop', this.handleDrop.bind(this));
+        this.browseBtn.addEventListener('click', () => this.fileInput.click());
+        this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+        
+        this.overlayCanvas.addEventListener('click', this.handleCanvasClick.bind(this));
+        
+        this.undoBtn.addEventListener('click', this.undo.bind(this));
+        this.redoBtn.addEventListener('click', this.redo.bind(this));
+        this.resetBtn.addEventListener('click', this.reset.bind(this));
+        this.downloadBtn.addEventListener('click', this.downloadCSV.bind(this));
+        this.loadDemoBtn.addEventListener('click', this.loadDemoImage.bind(this));
+        
+        this.minSizeSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.maxSizeSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.thresholdSlider.addEventListener('input', this.updateParameter.bind(this));
+        
+        // Bind all new parameter sliders
+        this.claheClipLimitSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.claheTileSizeSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.distanceTransformSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.watershedThresholdSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.erosionSizeSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.dilationSizeSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.adaptiveBlockSizeSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.adaptiveCSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.positiveFactorSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.mergeDistanceSlider.addEventListener('input', this.updateParameter.bind(this));
+        this.iouThresholdSlider.addEventListener('input', this.updateParameter.bind(this));
+        
+        // JSON parameter controls
+        this.saveParamsBtn.addEventListener('click', this.exportParameters.bind(this));
+        this.loadParamsBtn.addEventListener('click', () => this.paramFileInput.click());
+        this.paramFileInput.addEventListener('change', this.importParameters.bind(this));
+        
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    this.redo();
+                } else {
+                    this.undo();
+                }
+            }
+        });
+    }
+    
+    waitForOpenCV() {
+        let attempts = 0;
+        const maxAttempts = 150; // 15秒でタイムアウト
+        
+        const checkCV = () => {
+            if (typeof cv !== 'undefined' && cv.Mat) {
+                this.cvReady = true;
+                console.log('OpenCV.js ready');
+            } else {
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    console.error('OpenCV.js failed to load. Please ensure opencv.js is in the same directory as this HTML file.');
+                    alert('OpenCV.js failed to load. Please ensure opencv.js is in the same directory as this HTML file.');
+                } else {
+                    setTimeout(checkCV, 100);
+                }
+            }
+        };
+        
+        checkCV();
+    }
+    
+    async initializeWorkers() {
+        try {
+            // Workerコード内のプレースホルダを絶対URLに置き換える
+            const codeForWorker = workerCode.replace('__OPENCV_JS_URL__', opencvJsUrl);
+            const blob = new Blob([codeForWorker], { type: 'application/javascript' });
+            const workerUrl = URL.createObjectURL(blob);
+            
+            for (let i = 0; i < this.workerCount; i++) {
+                const worker = new Worker(workerUrl);
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error('Worker initialization timeout'));
+                    }, 15000); // 15秒でタイムアウト
+                    
+                    worker.onmessage = (e) => {
+                        if (e.data.type === 'ready') {
+                            clearTimeout(timeout);
+                            resolve();
+                        }
+                    };
+                    
+                    worker.onerror = (error) => {
+                        clearTimeout(timeout);
+                        reject(error);
+                    };
+                    
+                    worker.postMessage({ type: 'init' });
+                });
+                this.workers.push(worker);
+            }
+            console.log(`Initialized ${this.workerCount} workers`);
+        } catch (err) {
+            console.log('Worker initialization failed, will use local processing:', err.message);
+            this.workers = [];
+        }
+    }
+    
+    handleDragOver(e) {
+        e.preventDefault();
+        this.dropzone.classList.add('dragover');
+    }
+    
+    handleDragLeave(e) {
+        e.preventDefault();
+        this.dropzone.classList.remove('dragover');
+    }
+    
+    handleDrop(e) {
+        e.preventDefault();
+        this.dropzone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+            this.loadImage(files[0]);
+        }
+    }
+    
+    handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            this.loadImage(file);
+        }
+    }
+    
+    async loadImage(file) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const img = new Image();
+            img.onload = () => {
+                this.image = img;
+                this.displayImage();
+                this.processImage();
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    displayImage() {
+        // 元の画像サイズを保存
+        this.originalWidth = this.image.width;
+        this.originalHeight = this.image.height;
+        
+        // 先にワークスペースを表示し、レイアウトを確定させる
+        this.dropzone.style.display = 'none';
+        this.workspace.classList.remove('hidden');
+        
+        // 元画像解像度でキャンバスを作成
+        this.imageCanvas.width = this.originalWidth;
+        this.imageCanvas.height = this.originalHeight;
+        this.overlayCanvas.width = this.originalWidth;
+        this.overlayCanvas.height = this.originalHeight;
+        
+        // 次のフレームで表示サイズを計算し適用
+        requestAnimationFrame(() => {
+            this.resizeCanvasDisplay();
+            // 画像を描画（遅延させても問題ない）
+            this.imageCtx.drawImage(this.image, 0, 0);
+        });
+    }
+    
+    resizeCanvasDisplay() {
+        const container = document.querySelector('.canvas-container');
+        // サイドバー等を考慮した実効幅
+        const availableWidth = container.clientWidth - 32; // padding 分
+        const availableHeight = container.clientHeight - 32; // padding 分
+        const viewportHeight = window.innerHeight * 0.8;
+        const containerHeight = Math.min(container.clientHeight || viewportHeight, viewportHeight);
+        const widthForScale = Math.max(availableWidth, 100);
+        const heightForScale = Math.max(availableHeight || containerHeight, 100);
+        
+        const scaleX = widthForScale / this.originalWidth;
+        const scaleY = heightForScale / this.originalHeight;
+        this.displayScale = Math.min(scaleX, scaleY, 1);
+        
+        this.displayWidth = this.originalWidth * this.displayScale;
+        this.displayHeight = this.originalHeight * this.displayScale;
+        
+        // 適用
+        const wrapper = document.querySelector('.canvas-wrapper');
+        wrapper.style.width = this.displayWidth + 'px';
+        wrapper.style.height = this.displayHeight + 'px';
+        this.imageCanvas.style.width = this.displayWidth + 'px';
+        this.imageCanvas.style.height = this.displayHeight + 'px';
+        this.overlayCanvas.style.width = this.displayWidth + 'px';
+        this.overlayCanvas.style.height = this.displayHeight + 'px';
+    }
+    
+    async processImage() {
+        if (!this.cvReady && this.workers.length === 0) {
+            console.log('Waiting for OpenCV...');
+            // 最大30秒待機
+            let waitAttempts = 0;
+            const maxWaitAttempts = 300;
+            
+            const waitForReady = () => {
+                if (this.cvReady || this.workers.length > 0) {
+                    this.processImage();
+                } else {
+                    waitAttempts++;
+                    if (waitAttempts >= maxWaitAttempts) {
+                        console.error('OpenCV.js loading timeout. Cannot process image.');
+                        alert('OpenCV.js loading failed. Please refresh the page and ensure opencv.js is available.');
+                        return;
+                    }
+                    setTimeout(waitForReady, 100);
+                }
+            };
+            
+            waitForReady();
+            return;
+        }
+        
+        if (this.isProcessing) {
+            // 処理中の場合は1回だけ追加実行を予約
+            this.pendingReprocess = true;
+            return;
+        }
+        this.isProcessing = true;
+
+        try {
+            const currentToken = ++this.processingToken;
+            if (this.workers.length > 0) {
+                await this.processImageWithWorkers(currentToken);
+            } else {
+                await this.processImageLocal();
+            }
+            
+            this.saveState();
+            this.render();
+            this.updateStats();
+        } catch (error) {
+            console.error('Image processing failed:', error);
+            alert('Image processing failed: ' + error.message);
+        } finally {
+            this.isProcessing = false;
+            if (this.pendingReprocess) {
+                this.pendingReprocess = false;
+                this.processImage();
+            }
+        }
+    }
+    
+    async processImageLocal() {
+        const src = cv.imread(this.imageCanvas);
+        const gray = new cv.Mat();
+        const binary = new cv.Mat();
+        
+        try {
+            // DAB 抽出処理を追加
+            const dabImg = this.extractDAB(src);
+            cv.cvtColor(dabImg, gray, cv.COLOR_GRAY2RGB);
+            dabImg.delete();
+
+            // CLAHE 処理
+            const clahe = new cv.CLAHE(parseFloat(this.claheClipLimitSlider.value), 
+                new cv.Size(parseInt(this.claheTileSizeSlider.value), parseInt(this.claheTileSizeSlider.value)));
+            clahe.apply(gray, gray);
+
+            // 以降の処理は既存のまま
+            cv.cvtColor(gray, binary, cv.COLOR_RGB2GRAY);
+
+            const threshold = parseInt(this.thresholdSlider.value);
+            const minSize = parseInt(this.minSizeSlider.value);
+            const maxSize = parseInt(this.maxSizeSlider.value);
+            
+            const allNuclei = [];
+            
+            // Apply morphological operations for separating touching cells
+            const erosionSize = parseInt(this.erosionSizeSlider.value);
+            const dilationSize = parseInt(this.dilationSizeSlider.value);
+            
+            // Method 1: Otsu thresholding with watershed
+            const binary1 = new cv.Mat();
+            cv.threshold(gray, binary1, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU);
+            const binary1Processed = this.applyWatershed(binary1, gray, erosionSize, dilationSize);
+            const nuclei1 = this.findContoursInBinaryLocal(binary1Processed, gray, minSize, maxSize, threshold);
+            allNuclei.push(...nuclei1);
+            binary1.delete();
+            binary1Processed.delete();
+            
+            // Method 2: Fixed threshold
+            const binary2 = new cv.Mat();
+            cv.threshold(gray, binary2, threshold, 255, cv.THRESH_BINARY_INV);
+            const binary2Processed = this.applyWatershed(binary2, gray, erosionSize, dilationSize);
+            const nuclei2 = this.findContoursInBinaryLocal(binary2Processed, gray, minSize, maxSize, threshold);
+            allNuclei.push(...nuclei2);
+            binary2.delete();
+            binary2Processed.delete();
+            
+            // Method 3: Adaptive threshold for weak cells
+            const binary3 = new cv.Mat();
+            const blockSize = parseInt(this.adaptiveBlockSizeSlider.value);
+            const C = parseInt(this.adaptiveCSlider.value);
+            cv.adaptiveThreshold(gray, binary3, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, blockSize, C);
+            const nuclei3 = this.findContoursInBinaryLocal(binary3, gray, minSize, maxSize, threshold);
+            allNuclei.push(...nuclei3);
+            binary3.delete();
+            
+            // Method 4: High threshold for very bright positive cells
+            const binary4 = new cv.Mat();
+            cv.threshold(gray, binary4, threshold * 1.5, 255, cv.THRESH_BINARY_INV);
+            const nuclei4 = this.findContoursInBinaryLocal(binary4, gray, minSize, maxSize, threshold);
+            allNuclei.push(...nuclei4);
+            binary4.delete();
+            
+            // Merge and deduplicate results
+            this.nuclei = this.mergeNucleiLocal(allNuclei);
+            
+            src.delete();
+            gray.delete();
+            binary.delete();
+        } catch (error) {
+            console.error('Local processing failed:', error);
+            alert('Local processing failed: ' + error.message);
+        }
+    }
+    
+    async processImageWithWorkers(token) {
+        const chunkHeight = Math.ceil(this.image.height / this.workerCount);
+        const promises = [];
+        
+        for (let i = 0; i < this.workerCount; i++) {
+            const y = i * chunkHeight;
+            const height = Math.min(chunkHeight, this.image.height - y);
+            
+            if (height <= 0) continue;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = this.image.width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(this.image, 0, y, this.image.width, height, 0, 0, this.image.width, height);
+            
+            const imageData = ctx.getImageData(0, 0, this.image.width, height);
+            
+            const promise = new Promise((resolve, reject) => {
+                const worker = this.workers[i];
+                const timeout = setTimeout(() => {
+                    reject(new Error('Worker processing timeout'));
+                }, 60000); // 60秒に延長
+                
+                worker.onmessage = (e) => {
+                    clearTimeout(timeout);
+                    if (e.data.type === 'result' && e.data.token === token) {
+                        resolve(e.data.data);
+                    } else if (e.data.type === 'error') {
+                        reject(new Error(e.data.error));
+                    }
+                };
+                
+                worker.onerror = (error) => {
+                    clearTimeout(timeout);
+                    reject(error);
+                };
+                
+                worker.postMessage({
+                    type: 'process',
+                    data: {
+                        imageData,
+                        threshold: parseInt(this.thresholdSlider.value),
+                        minSize: parseInt(this.minSizeSlider.value),
+                        maxSize: parseInt(this.maxSizeSlider.value),
+                        chunkInfo: { offsetX: 0, offsetY: y },
+                        params: {
+                            claheClipLimit: parseFloat(this.claheClipLimitSlider.value),
+                            claheTileSize: parseInt(this.claheTileSizeSlider.value),
+                            adaptiveBlockSize: parseInt(this.adaptiveBlockSizeSlider.value),
+                            adaptiveC: parseInt(this.adaptiveCSlider.value),
+                            positiveFactor: parseFloat(this.positiveFactorSlider.value),
+                            mergeDistance: parseInt(this.mergeDistanceSlider.value),
+                            iouThreshold: parseFloat(this.iouThresholdSlider.value)
+                        },
+                        token
+                    }
+                });
+            });
+            
+            promises.push(promise);
+        }
+        
+        const results = await Promise.all(promises);
+        this.nuclei = results.flat();
+    }
+    
+    handleCanvasClick(e) {
+        const rect = this.overlayCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // 表示座標から元画像座標に変換
+        const canvasX = (x / this.displayScale);
+        const canvasY = (y / this.displayScale);
+        
+        const clickRadius = 20;
+        let nucleusFound = false;
+        
+        for (const nucleus of this.nuclei) {
+            const distance = Math.sqrt(
+                Math.pow(canvasX - nucleus.x, 2) + 
+                Math.pow(canvasY - nucleus.y, 2)
+            );
+            
+            if (distance < Math.max(nucleus.width, nucleus.height) / 2 + clickRadius) {
+                nucleus.isPositive = !nucleus.isPositive;
+                nucleusFound = true;
+                break;
+            }
+        }
+        
+        if (nucleusFound) {
+            this.saveState();
+            this.render();
+            this.updateStats();
+            this.scheduleAutoDownload();
+        }
+    }
+    
+    render() {
+        this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+        
+        for (const nucleus of this.nuclei) {
+            this.overlayCtx.strokeStyle = nucleus.isPositive ? '#e74c3c' : '#2ecc71';
+            this.overlayCtx.fillStyle = nucleus.isPositive ? 
+                'rgba(231, 76, 60, 0.2)' : 'rgba(46, 204, 113, 0.2)';
+            this.overlayCtx.lineWidth = 2;
+            
+            this.overlayCtx.beginPath();
+            this.overlayCtx.ellipse(
+                nucleus.x, 
+                nucleus.y, 
+                nucleus.width / 2, 
+                nucleus.height / 2, 
+                0, 0, Math.PI * 2
+            );
+            this.overlayCtx.stroke();
+            this.overlayCtx.fill();
+        }
+    }
+    
+    updateStats() {
+        const positive = this.nuclei.filter(n => n.isPositive).length;
+        const negative = this.nuclei.filter(n => !n.isPositive).length;
+        const total = this.nuclei.length;
+        const index = total > 0 ? (positive / total * 100).toFixed(1) : 0;
+        
+        this.positiveCount.textContent = positive;
+        this.negativeCount.textContent = negative;
+        this.ki67Index.textContent = `${index}%`;
+    }
+    
+    updateParameter(e) {
+        const slider = e.target;
+        const valueSpan = document.getElementById(slider.id + 'Value');
+        valueSpan.textContent = slider.value;
+        
+        this.saveSettings();
+        if (this.image) {
+            // デバウンスして頻繁な再計算を抑制
+            clearTimeout(this.reprocessTimer);
+            this.reprocessTimer = setTimeout(() => {
+                this.processImage();
+            }, 300);
+        }
+    }
+    
+    saveState() {
+        const state = JSON.stringify(this.nuclei);
+        this.history = this.history.slice(0, this.historyIndex + 1);
+        this.history.push(state);
+        this.historyIndex++;
+        
+        this.undoBtn.disabled = this.historyIndex <= 0;
+        this.redoBtn.disabled = this.historyIndex >= this.history.length - 1;
+    }
+    
+    undo() {
+        if (this.historyIndex > 0) {
+            this.historyIndex--;
+            this.nuclei = JSON.parse(this.history[this.historyIndex]);
+            this.render();
+            this.updateStats();
+            this.updateHistoryButtons();
+        }
+    }
+    
+    redo() {
+        if (this.historyIndex < this.history.length - 1) {
+            this.historyIndex++;
+            this.nuclei = JSON.parse(this.history[this.historyIndex]);
+            this.render();
+            this.updateStats();
+            this.updateHistoryButtons();
+        }
+    }
+    
+    updateHistoryButtons() {
+        this.undoBtn.disabled = this.historyIndex <= 0;
+        this.redoBtn.disabled = this.historyIndex >= this.history.length - 1;
+    }
+    
+    reset() {
+        this.processImage();
+    }
+    
+    scheduleAutoDownload() {
+        clearTimeout(this.idleTimer);
+        this.idleTimer = setTimeout(() => {
+            this.downloadCSV();
+        }, 500);
+    }
+    
+    downloadCSV() {
+        const csv = this.generateCSV();
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ki67_analysis_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+    
+    generateCSV() {
+        let csv = 'Nucleus ID,X Position,Y Position,Width,Height,Area,Intensity,Classification\n';
+        
+        this.nuclei.forEach((nucleus, index) => {
+            csv += `${index + 1},${nucleus.x.toFixed(2)},${nucleus.y.toFixed(2)},`;
+            csv += `${nucleus.width},${nucleus.height},${nucleus.area.toFixed(2)},`;
+            csv += `${nucleus.intensity.toFixed(2)},${nucleus.isPositive ? 'Positive' : 'Negative'}\n`;
+        });
+        
+        csv += '\nSummary\n';
+        const positive = this.nuclei.filter(n => n.isPositive).length;
+        const negative = this.nuclei.filter(n => !n.isPositive).length;
+        const total = this.nuclei.length;
+        const index = total > 0 ? (positive / total * 100).toFixed(1) : 0;
+        
+        csv += `Total Nuclei,${total}\n`;
+        csv += `Positive (Ki-67+),${positive}\n`;
+        csv += `Negative (Ki-67-),${negative}\n`;
+        csv += `Ki-67 Index,${index}%\n`;
+        
+        return csv;
+    }
+    
+    async saveSettings() {
+        const settings = {
+            minSize: this.minSizeSlider.value,
+            maxSize: this.maxSizeSlider.value,
+            threshold: this.thresholdSlider.value
+        };
+        
+        localStorage.setItem('ki67_settings', JSON.stringify(settings));
+        
+        if ('indexedDB' in window) {
+            try {
+                const db = await this.openDB();
+                const transaction = db.transaction(['settings'], 'readwrite');
+                const store = transaction.objectStore('settings');
+                await store.put({ id: 'parameters', ...settings });
+            } catch (err) {
+                console.log('IndexedDB save failed, using localStorage only');
+            }
+        }
+    }
+    
+    async loadSettings() {
+        let settings = null;
+        
+        if ('indexedDB' in window) {
+            try {
+                const db = await this.openDB();
+                const transaction = db.transaction(['settings'], 'readonly');
+                const store = transaction.objectStore('settings');
+                const result = await store.get('parameters');
+                if (result) settings = result;
+            } catch (err) {
+                console.log('IndexedDB load failed, falling back to localStorage');
+            }
+        }
+        
+        if (!settings) {
+            const saved = localStorage.getItem('ki67_settings');
+            if (saved) settings = JSON.parse(saved);
+        }
+        
+        if (settings) {
+            this.minSizeSlider.value = settings.minSize;
+            this.maxSizeSlider.value = settings.maxSize;
+            this.thresholdSlider.value = settings.threshold;
+            
+            this.minSizeValue.textContent = settings.minSize;
+            this.maxSizeValue.textContent = settings.maxSize;
+            this.thresholdValue.textContent = settings.threshold;
+        }
+    }
+    
+    openDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('Ki67AnalyzerDB', 1);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains('settings')) {
+                    db.createObjectStore('settings', { keyPath: 'id' });
+                }
+            };
+        });
+    }
+    
+    async loadDemoImage() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 800;
+        canvas.height = 600;
+        
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const nucleiData = [];
+        for (let i = 0; i < 100; i++) {
+            const x = Math.random() * (canvas.width - 50) + 25;
+            const y = Math.random() * (canvas.height - 50) + 25;
+            const size = Math.random() * 20 + 15;
+            const isPositive = Math.random() > 0.5;
+            const intensity = isPositive ? Math.random() * 50 + 50 : Math.random() * 50 + 150;
+            
+            nucleiData.push({ x, y, size, isPositive, intensity });
+            
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+            const color = Math.floor(255 - intensity);
+            gradient.addColorStop(0, `rgb(${color}, ${color}, ${color})`);
+            gradient.addColorStop(1, `rgb(${color + 30}, ${color + 30}, ${color + 30})`);
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        canvas.toBlob((blob) => {
+            const file = new File([blob], 'demo-ki67.png', { type: 'image/png' });
+            this.loadImage(file);
+        });
+    }
+    
+    findContoursInBinaryLocal(binary, grayImage, minSize, maxSize, threshold) {
+        const contours = new cv.MatVector();
+        const hierarchy = new cv.Mat();
+        cv.findContours(binary, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+        
+        const nuclei = [];
+        
+        for (let i = 0; i < contours.size(); i++) {
+            const contour = contours.get(i);
+            const area = cv.contourArea(contour);
+            
+            if (area >= minSize && area <= maxSize) {
+                const moments = cv.moments(contour);
+                if (moments.m00 === 0) {
+                    contour.delete();
+                    continue;
+                }
+                
+                const cx = moments.m10 / moments.m00;
+                const cy = moments.m01 / moments.m00;
+                const rect = cv.boundingRect(contour);
+                
+                // Ensure ROI is within bounds
+                if (rect.x + rect.width <= grayImage.cols && rect.y + rect.height <= grayImage.rows) {
+                    const roiGray = grayImage.roi(rect);
+                    const meanIntensity = cv.mean(roiGray)[0];
+                    
+                    // Improved classification logic
+                    const positiveFactor = parseFloat(this.positiveFactorSlider.value);
+                    const isPositive = meanIntensity < threshold * positiveFactor;
+                    
+                    nuclei.push({
+                        id: Date.now() + Math.random(),
+                        x: cx,
+                        y: cy,
+                        width: rect.width,
+                        height: rect.height,
+                        area: area,
+                        intensity: meanIntensity,
+                        isPositive: isPositive
+                    });
+                    
+                    roiGray.delete();
+                }
+            }
+            contour.delete();
+        }
+        
+        contours.delete();
+        hierarchy.delete();
+        
+        return nuclei;
+    }
+    
+    mergeNucleiLocal(allNuclei) {
+        if (allNuclei.length === 0) return [];
+
+        const iouThreshold = parseFloat(this.iouThresholdSlider.value);
+        const merged = [];
+        const used = new Set();
+
+        const iou = (a, b) => {
+            const x1 = Math.max(a.x - a.width / 2, b.x - b.width / 2);
+            const y1 = Math.max(a.y - a.height / 2, b.y - b.height / 2);
+            const x2 = Math.min(a.x + a.width / 2, b.x + b.width / 2);
+            const y2 = Math.min(a.y + a.height / 2, b.y + b.height / 2);
+            const interArea = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+            if (interArea === 0) return 0;
+            const areaA = a.width * a.height;
+            const areaB = b.width * b.height;
+            return interArea / (areaA + areaB - interArea);
+        };
+
+        const contains = (inner, outer) => (
+            inner.x - inner.width / 2 >= outer.x - outer.width / 2 &&
+            inner.x + inner.width / 2 <= outer.x + outer.width / 2 &&
+            inner.y - inner.height / 2 >= outer.y - outer.height / 2 &&
+            inner.y + inner.height / 2 <= outer.y + outer.height / 2
+        );
+
+        for (let i = 0; i < allNuclei.length; i++) {
+            if (used.has(i)) continue;
+
+            const nucleus = allNuclei[i];
+            const duplicates = [i];
+
+            for (let j = i + 1; j < allNuclei.length; j++) {
+                if (used.has(j)) continue;
+                const other = allNuclei[j];
+
+                // 距離条件
+                const distance = Math.hypot(nucleus.x - other.x, nucleus.y - other.y);
+                const mergeDistance = parseInt(this.mergeDistanceSlider.value);
+
+                // IoU 条件または包含関係
+                const overlap = iou(nucleus, other);
+                const contained = contains(nucleus, other) || contains(other, nucleus);
+
+                if (distance < mergeDistance || overlap > iouThreshold || contained) {
+                    duplicates.push(j);
+                }
+            }
+
+            // duplicates 内で最大面積のものを採用
+            let bestNucleus = nucleus;
+            for (const idx of duplicates) {
+                used.add(idx);
+                if (allNuclei[idx].area > bestNucleus.area) {
+                    bestNucleus = allNuclei[idx];
+                }
+            }
+
+            merged.push(bestNucleus);
+        }
+
+        return merged;
+    }
+    
+    applyWatershed(binary, grayImage, erosionSize, dilationSize) {
+        const result = binary.clone();
+        
+        if (erosionSize > 0 || dilationSize > 0) {
+            // Apply morphological operations
+            const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(2 * erosionSize + 1, 2 * erosionSize + 1));
+            
+            if (erosionSize > 0) {
+                cv.erode(result, result, kernel);
+            }
+            
+            if (dilationSize > 0) {
+                const dilationKernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(2 * dilationSize + 1, 2 * dilationSize + 1));
+                cv.dilate(result, result, dilationKernel);
+                dilationKernel.delete();
+            }
+            
+            kernel.delete();
+        }
+        
+        // Distance transform for watershed
+        const distTransform = parseInt(this.distanceTransformSlider.value);
+        const watershedThreshold = parseFloat(this.watershedThresholdSlider.value);
+        
+        if (distTransform > 0) {
+            const dist = new cv.Mat();
+            const distDisplay = new cv.Mat();
+            
+            cv.distanceTransform(result, dist, cv.DIST_L2, 5);
+            cv.normalize(dist, distDisplay, 0, 1, cv.NORM_MINMAX);
+            
+            // Find peaks (sure foreground)
+            const maxVal = cv.minMaxLoc(dist).maxVal;
+            const fg = new cv.Mat();
+            cv.threshold(dist, fg, watershedThreshold * maxVal, 255, cv.THRESH_BINARY);
+            fg.convertTo(fg, cv.CV_8U);
+            
+            // Find unknown region
+            const unknown = new cv.Mat();
+            cv.subtract(result, fg, unknown);
+            
+            // Marker labelling
+            const markers = new cv.Mat();
+            cv.connectedComponents(fg, markers);
+            
+            // Add 1 to all labels so background is 1, not 0
+            const one = new cv.Mat(markers.rows, markers.cols, markers.type(), new cv.Scalar(1));
+            cv.add(markers, one, markers);
+            
+            // Mark unknown region as 0
+            markers.setTo(new cv.Scalar(0), unknown);
+            
+            // Apply watershed
+            const src3C = new cv.Mat();
+            cv.cvtColor(grayImage, src3C, cv.COLOR_GRAY2RGB);
+            cv.watershed(src3C, markers);
+            
+            // Convert result back to binary
+            result.setTo(new cv.Scalar(0));
+            result.setTo(new cv.Scalar(255), markers);
+            
+            dist.delete();
+            distDisplay.delete();
+            fg.delete();
+            unknown.delete();
+            markers.delete();
+            one.delete();
+            src3C.delete();
+        }
+        
+        return result;
+    }
+    
+    async exportParameters() {
+        const params = {
+            basic: {
+                minSize: this.minSizeSlider.value,
+                maxSize: this.maxSizeSlider.value,
+                threshold: this.thresholdSlider.value
+            },
+            clahe: {
+                clipLimit: this.claheClipLimitSlider.value,
+                tileSize: this.claheTileSizeSlider.value
+            },
+            watershed: {
+                distanceTransform: this.distanceTransformSlider.value,
+                watershedThreshold: this.watershedThresholdSlider.value
+            },
+            morphology: {
+                erosionSize: this.erosionSizeSlider.value,
+                dilationSize: this.dilationSizeSlider.value
+            },
+            adaptive: {
+                blockSize: this.adaptiveBlockSizeSlider.value,
+                C: this.adaptiveCSlider.value
+            },
+            classification: {
+                positiveFactor: this.positiveFactorSlider.value,
+                mergeDistance: this.mergeDistanceSlider.value,
+                iouThreshold: this.iouThresholdSlider.value
+            },
+            timestamp: new Date().toISOString()
+        };
+        
+        const blob = new Blob([JSON.stringify(params, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ki67_parameters_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+    
+    async importParameters(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const params = JSON.parse(event.target.result);
+                
+                // Load basic parameters
+                if (params.basic) {
+                    this.minSizeSlider.value = params.basic.minSize;
+                    this.maxSizeSlider.value = params.basic.maxSize;
+                    this.thresholdSlider.value = params.basic.threshold;
+                    this.minSizeValue.textContent = params.basic.minSize;
+                    this.maxSizeValue.textContent = params.basic.maxSize;
+                    this.thresholdValue.textContent = params.basic.threshold;
+                }
+                
+                // Load CLAHE parameters
+                if (params.clahe) {
+                    this.claheClipLimitSlider.value = params.clahe.clipLimit;
+                    this.claheTileSizeSlider.value = params.clahe.tileSize;
+                    this.claheClipLimitValue.textContent = params.clahe.clipLimit;
+                    this.claheTileSizeValue.textContent = params.clahe.tileSize;
+                }
+                
+                // Load watershed parameters
+                if (params.watershed) {
+                    this.distanceTransformSlider.value = params.watershed.distanceTransform;
+                    this.watershedThresholdSlider.value = params.watershed.watershedThreshold;
+                    this.distanceTransformValue.textContent = params.watershed.distanceTransform;
+                    this.watershedThresholdValue.textContent = params.watershed.watershedThreshold;
+                }
+                
+                // Load morphology parameters
+                if (params.morphology) {
+                    this.erosionSizeSlider.value = params.morphology.erosionSize;
+                    this.dilationSizeSlider.value = params.morphology.dilationSize;
+                    this.erosionSizeValue.textContent = params.morphology.erosionSize;
+                    this.dilationSizeValue.textContent = params.morphology.dilationSize;
+                }
+                
+                // Load adaptive parameters
+                if (params.adaptive) {
+                    this.adaptiveBlockSizeSlider.value = params.adaptive.blockSize;
+                    this.adaptiveCSlider.value = params.adaptive.C;
+                    this.adaptiveBlockSizeValue.textContent = params.adaptive.blockSize;
+                    this.adaptiveCValue.textContent = params.adaptive.C;
+                }
+                
+                // Load classification parameters
+                if (params.classification) {
+                    this.positiveFactorSlider.value = params.classification.positiveFactor;
+                    this.mergeDistanceSlider.value = params.classification.mergeDistance;
+                    this.positiveFactorValue.textContent = params.classification.positiveFactor;
+                    this.mergeDistanceValue.textContent = params.classification.mergeDistance;
+                    
+                    if (params.classification.iouThreshold !== undefined) {
+                        this.iouThresholdSlider.value = params.classification.iouThreshold;
+                        this.iouThresholdValue.textContent = params.classification.iouThreshold;
+                    }
+                }
+                
+                this.saveSettings();
+                this.processImage();
+            } catch (err) {
+                alert('Error loading parameters: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+        
+        // Clear the input for future imports
+        e.target.value = '';
+    }
+
+    extractDAB(srcRGBMat) {
+        // 1. 12-bit の OD 変換
+        let od = new cv.Mat();
+        srcRGBMat.convertTo(od, cv.CV_32F, 1/255.0);
+        cv.add(od, new cv.Scalar(1.0, 1.0, 1.0), od);
+        cv.log(od, od);
+        cv.multiply(od, new cv.Scalar(-1.0, -1.0, -1.0), od);
+
+        // 2. DAB 固有ベクトルへの投影
+        const dab = new cv.Mat();
+        // Ruifrok–Johnston 法の DAB ベクトル
+        const kernel = cv.matFromArray(1, 3, cv.CV_32F, [0.650, 0.704, 0.286]);
+        cv.transform(od, dab, kernel);
+
+        // 3. 8-bit に正規化
+        let dab8 = new cv.Mat();
+        cv.normalize(dab, dab8, 0, 255, cv.NORM_MINMAX);
+        dab8.convertTo(dab8, cv.CV_8U);
+
+        // メモリ解放
+        od.delete();
+        dab.delete();
+        kernel.delete();
+
+        return dab8;
+    }
+}
+
+new Ki67Analyzer();
+    </script>
+</body>
+</html>
